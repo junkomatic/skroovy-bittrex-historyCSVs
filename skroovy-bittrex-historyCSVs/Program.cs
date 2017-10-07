@@ -25,7 +25,7 @@ namespace skroovy_bittrex_historyCSVs
                 Console.ReadLine();
             }
 
-            Console.WriteLine("-Press ENTER to exit-");
+            Console.WriteLine("\r\n-Press ENTER to exit-");
             Console.ReadLine();
         }
 
@@ -91,6 +91,7 @@ namespace skroovy_bittrex_historyCSVs
             Console.WriteLine("Updating CSVs - Just a moment...");
             UpdateOrCreateCSVs();
 
+            Console.WriteLine("DONE");
         }
 
 
