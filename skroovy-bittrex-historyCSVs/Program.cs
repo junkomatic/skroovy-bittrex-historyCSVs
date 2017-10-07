@@ -343,7 +343,7 @@ namespace skroovy_bittrex_historyCSVs
 
 
 
-        public class HistDataResponse
+    public class HistDataResponse
     {
         public bool success { get; set; }
         public string message { get; set; }
