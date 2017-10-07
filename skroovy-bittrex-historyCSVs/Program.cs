@@ -296,6 +296,7 @@ namespace skroovy_bittrex_historyCSVs
         private static HttpClient client = new HttpClient()
         {
             BaseAddress = new Uri("https://bittrex.com/api/v1.1/"),
+            Timeout = TimeSpan.FromMinutes(3)
         };
 
         public static async Task<GetMarketsResponse> GetMarkets()
