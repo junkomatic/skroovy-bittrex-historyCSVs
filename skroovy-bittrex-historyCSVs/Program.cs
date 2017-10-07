@@ -44,8 +44,8 @@ namespace skroovy_bittrex_historyCSVs
                     saved = 0,
                     totalCount = 0;
         private bool savedComplete = false;
-        private const string dbName = "MarketHistory.data";
 
+        private const string dbName = "MarketHistory.data";
 
         public async Task UpdateHistData()
         {
@@ -90,6 +90,10 @@ namespace skroovy_bittrex_historyCSVs
 
             Console.WriteLine("Updating CSVs - Just a moment...");
             UpdateOrCreateCSVs();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            File.Delete("MarketHistory.data");
 
             Console.WriteLine("DONE");
         }
@@ -208,7 +212,7 @@ namespace skroovy_bittrex_historyCSVs
         {
             if (!File.Exists(dbName))
             {
-                Console.WriteLine("LOCAL DATA FILE NOT FOUND\r\nCREATING NEW '{0}' FILE...", dbName);
+                //Console.WriteLine("LOCAL DATA FILE NOT FOUND\r\nCREATING NEW '{0}' FILE...", dbName);
                 SQLiteConnection.CreateFile(dbName);
                 return true;
             }
@@ -251,6 +255,7 @@ namespace skroovy_bittrex_historyCSVs
                             UpdateExistingCSV(dt, path);
                         }
                     }
+                    conn.Close();
                 }
             }
         }
