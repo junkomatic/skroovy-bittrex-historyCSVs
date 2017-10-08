@@ -17,7 +17,7 @@ namespace skroovy_bittrex_historyCSVs
         {
             try
             {
-                RunAsync().Wait();
+                new HistoricalData().UpdateHistData().Wait();
             }
             catch (Exception e)
             {
@@ -28,23 +28,15 @@ namespace skroovy_bittrex_historyCSVs
             Console.WriteLine("\r\n-Press ENTER to exit-");
             Console.ReadLine();
         }
-
-        static async Task RunAsync()
-        {
-            await new HistoricalData().UpdateHistData();
-        }
     }
-
 
 
     public class HistoricalData
     {
         private static ConcurrentQueue<HistDataResponse> DataQueue = new ConcurrentQueue<HistDataResponse>();
-        private int downloaded = 0,
-                    saved = 0,
+        private int saved = 0,
                     totalCount = 0;
         private bool savedComplete = false;
-
         private const string dbName = "MarketHistory.data";
 
         public async Task UpdateHistData()
@@ -79,9 +71,11 @@ namespace skroovy_bittrex_historyCSVs
 
             totalCount = BTCmarketDeltas.Count;
 
+            //Download all market histories, enqueue responses:
             var downloadHists = BTCmarketDeltas.Select(EnqueueData).ToArray();
             await Task.WhenAll(downloadHists);
 
+            //Wait for save data process to complete, then end thread:
             while (!savedComplete)
                 Thread.Sleep(100);
 
@@ -91,6 +85,7 @@ namespace skroovy_bittrex_historyCSVs
             Console.WriteLine("Updating CSVs - Just a moment...");
             UpdateOrCreateCSVs();
 
+            // Garbage Collection to force close SQLiteConnection, delete temp data:
             GC.Collect();
             GC.WaitForPendingFinalizers();
             File.Delete("MarketHistory.data");
@@ -107,10 +102,8 @@ namespace skroovy_bittrex_historyCSVs
                 Console.WriteLine("    !!!!ERR GET-HISTORY>>> " + histData.message);
                 return;
             }
-            downloaded++;
 
             DataQueue.Enqueue(histData);
-            //Console.Write("\rMarkets Downloaded: {0}/{1}/{2}", downloaded, saved, totalCount);
         }
 
 
@@ -128,9 +121,7 @@ namespace skroovy_bittrex_historyCSVs
                         do
                         {
                             while (DataQueue.IsEmpty)
-                            {
                                 Thread.Sleep(100);
-                            }
 
                             bool DQed = DataQueue.TryDequeue(out HistDataResponse history);
                             if (DQed)
@@ -140,7 +131,6 @@ namespace skroovy_bittrex_historyCSVs
                                 else
                                     UpdateDataTable(history, cmd);
                             }
-
                         }
                         while (saved < totalCount);
                         tx.Commit();
@@ -158,9 +148,7 @@ namespace skroovy_bittrex_historyCSVs
             cmd.ExecuteNonQuery();
 
             foreach (HistDataLine line in data.result)
-            {
                 EnterSQLiteRow(line, cmd, data.MarketDelta);
-            }
 
             saved++;
             Console.Write("\rDOWNLOADING MARKETS: {0}/{1}", saved, totalCount);
@@ -183,14 +171,11 @@ namespace skroovy_bittrex_historyCSVs
             foreach (HistDataLine line in data.result)
             {
                 if (line.T <= dt)
-                {
                     continue;
-                }
                 else
-                {
                     EnterSQLiteRow(line, cmd, data.MarketDelta);
-                }
             }
+
             saved++;
             Console.Write("\rDOWNLOADING MARKETS: {0}/{1}", saved, totalCount);
         }
@@ -212,7 +197,6 @@ namespace skroovy_bittrex_historyCSVs
         {
             if (!File.Exists(dbName))
             {
-                //Console.WriteLine("LOCAL DATA FILE NOT FOUND\r\nCREATING NEW '{0}' FILE...", dbName);
                 SQLiteConnection.CreateFile(dbName);
                 return true;
             }
@@ -232,9 +216,7 @@ namespace skroovy_bittrex_historyCSVs
                     cmd.CommandText = "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY 1";
                     SQLiteDataReader r = cmd.ExecuteReader();
                     while (r.Read())
-                    {
                         tableNames.Add(r["name"].ToString());
-                    }
 
                     Directory.CreateDirectory("BtrexCSVs");
 
@@ -247,13 +229,9 @@ namespace skroovy_bittrex_historyCSVs
                         string path = @"BtrexCSVs\" + tName + ".csv";
 
                         if (!File.Exists(path))
-                        {
                             GenerateNewCSV(dt, path);
-                        }
                         else
-                        {
                             UpdateExistingCSV(dt, path);
-                        }
                     }
                     conn.Close();
                 }
@@ -282,8 +260,6 @@ namespace skroovy_bittrex_historyCSVs
                 foreach (DataRow row in table.Rows)
                 {
                     DateTime rowTime = Convert.ToDateTime(row.ItemArray[0]);
-                    //Console.WriteLine(rowTime + " : " + lastDateTime);
-                    //Console.ReadLine();
 
                     if (rowTime <= lastDateTime)
                         continue;
@@ -344,12 +320,8 @@ namespace skroovy_bittrex_historyCSVs
     }
 
 
-
-
-
-
-
-
+    //####POCO RESPONSE CLASSES
+   
     public class HistDataResponse
     {
         public bool success { get; set; }
@@ -385,5 +357,4 @@ namespace skroovy_bittrex_historyCSVs
         public bool IsActive { get; set; }
         public string Created { get; set; }
     }
-    
 }
