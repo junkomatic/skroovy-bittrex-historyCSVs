@@ -272,6 +272,7 @@ namespace skroovy_bittrex_historyCSVs
     }
 
 
+    //Static class containing REST API calls:
     public static class BtrexREST
     {
         private static HttpClient client = new HttpClient()
