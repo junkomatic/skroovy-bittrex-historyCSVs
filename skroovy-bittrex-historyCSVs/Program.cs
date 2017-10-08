@@ -133,6 +133,7 @@ namespace skroovy_bittrex_historyCSVs
                             }
                         }
                         while (saved < totalCount);
+
                         tx.Commit();
                     }
                 }
