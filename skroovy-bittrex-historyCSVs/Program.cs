@@ -21,7 +21,7 @@ namespace skroovy_bittrex_historyCSVs
             }
             catch (Exception e)
             {
-                Console.Write("\r\n\r\n!!!!TOP LVL ERR>> " + e.InnerException.Message + ",\r\n\t" + e.InnerException.Message);
+                Console.Write("\r\n\r\n!!!!TOP LVL ERR>> " + e.Message + ",\r\n\t" + e.InnerException.Message);
                 Console.ReadLine();
             }
 
